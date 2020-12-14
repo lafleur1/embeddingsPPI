@@ -28,7 +28,7 @@ from itertools import combinations
 from numpy.random import choice
 import random
 import sqlite3
-from venn import venn
+#from venn import venn
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -178,21 +178,9 @@ def getTransformerMeanSequenceOutput(seq):
 def getUniRepPooledSequence(sequence):
     #return
     model = UniRepModel.from_pretrained('babbler-1900')
-    tokenizer = TAPETokenizer(vocab='unirep')
     token_ids = torch.tensor([tokenizer.encode(sequence)])
     output = model(token_ids)
     return output[1]
-
-def createReps():
-    cdHitSeqs = getCDHIT("embedPPI_50_2000_70_Cutoff.clstr", "./embedSeqs/")
-    for seq in cdHitSeqs:
-        print(seq)
-        print(len(seq))
-        meanS1 = getTransformerMeanSequenceOutput(seq)
-        uniRepPool = getUniRepPooledSequence(seq)
-        print(meanS1.shape)
-        print(uniRepPool.shape)
-        input()
 
 
 def retrieveOrigNames(namesDone):
@@ -262,6 +250,6 @@ def lookAtIntersection(cdHitSeqs):
 
 
 #looking at the number of positive examples with the cluster reps
-cdHitSeqs = getClusterRepIDs("embedPPI_50_2000_70_Cutoff.clstr") #sequence IDs in the DB
-lookAtIntersection(cdHitSeqs)
+#cdHitSeqs = getClusterRepIDs("embedPPI_50_2000_70_Cutoff.clstr") #sequence IDs in the DB
+#lookAtIntersection(cdHitSeqs)
 
