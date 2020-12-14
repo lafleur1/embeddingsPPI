@@ -49,6 +49,33 @@ def getSequences():
         cur.execute("SELECT * FROM proteins")
         return cur.fetchall()
 
+def getAllInteractions():
+    # return the contents of the sequence table
+    conn = db_connect()
+    cur = conn.cursor()
+    with conn:
+        cur.execute("SELECT * FROM interaction")
+        return cur.fetchall()
+
+
+
+def getSubsetInteractions(idList):
+    # return all interactions where both partners in idList
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM interaction")
+    ints = cur.fetchall()
+    subset = []
+    for i in range(0, len(ints)):
+        int_potential = ints[i]
+        if i%1000 == 0:
+            print ("ON: ", i, " OUT OF ", len(ints))
+            print (len(subset))
+        #check each interaction partners if they are in the list of ids
+        #print (int_potential)
+        if int_potential[1] in idList and int_potential[2] in idList:
+            subset.append(int_potential)
+    return subset
 
 def resetAllSequenceLens():
     #getting all sequences <= 2000 AA long
@@ -84,6 +111,21 @@ def proteinsInDBtoFastaForCDHit(lower, upper, saveName):
     with open(saveName, "w") as f:
         for result in allFetched:
             f.write(">" + str(result[0]) + "\n" + result[1] + "\n" )
+
+
+def getClusterRepIDs(clusterFile):
+    #each rep has a * by the name
+    reps = []
+    with open(clusterFile, "r") as f:
+        lines = [x.strip() for x in f.readlines()]
+        for l in lines:
+            if "*" in l:
+                half = l.split(">")[1].translate(str.maketrans('', '', string.punctuation))
+                half = half.replace(" ","")
+                reps.append(half)
+    #change to ints
+    reps = [int(x) for x in reps]
+    return reps
 
 #todo: extract ids of CD-HIT clusters
 def getCDHIT(clusterFile, outputDir):
@@ -141,21 +183,85 @@ def getUniRepPooledSequence(sequence):
     output = model(token_ids)
     return output[1]
 
+def createReps():
+    cdHitSeqs = getCDHIT("embedPPI_50_2000_70_Cutoff.clstr", "./embedSeqs/")
+    for seq in cdHitSeqs:
+        print(seq)
+        print(len(seq))
+        meanS1 = getTransformerMeanSequenceOutput(seq)
+        uniRepPool = getUniRepPooledSequence(seq)
+        print(meanS1.shape)
+        print(uniRepPool.shape)
+        input()
+
+
+def retrieveOrigNames(namesDone):
+    #retrieve count of proteins in HuRI
+    con = db_connect()
+    cur = con.cursor()
+    huRIMappedNames = []
+    for i in range(0, len(namesDone)):
+        name = namesDone[i]
+        if i % 1000 == 0:
+            print ("ON ", i , " OUT OF ", len(namesDone))
+        lookupQ = cur.execute("SELECT * FROM id_map WHERE database=? AND my_id=?", ("HuRI", name))
+        fetched = lookupQ.fetchall()
+        if len(fetched) != 0:
+            #print ("found match in HuRI!!!")
+            huRIMappedNames.append(fetched[0][2])
+    #print (len(huRIMappedNames))
+    return huRIMappedNames
+
+def overlapTwoLists(list1, list2):
+    intersection = set(list1).intersection(set(list2))
+    return list(intersection)
+
+def lookAtPositivesAndNegativesCurrent(listIDs):
+    # looking at the number of positive examples with the cluster reps
+    cdHitSeqs = getClusterRepIDs("embedPPI_50_2000_70_Cutoff.clstr")  # sequence IDs in the DB
+    # get all interactions
+    subsetGoodFor = getSubsetInteractions(cdHitSeqs)
+    positives = [x for x in subsetGoodFor if x[8] != 1]
+    print(len(positives))  # 279775
+    negatives = [x for x in subsetGoodFor if x[8] == 1]
+    print(len(negatives))  # 918
+    return positives, negatives
+
+
+def lookAtIntersection(cdHitSeqs):
+    #
+    print ('start ret')
+    huRIMappedNames = retrieveOrigNames(cdHitSeqs)
+    print(len(huRIMappedNames))
+    in05 = open("./ppiDB/HuRI/HuRI_05_proteins.txt", "r")
+    in05 = [x.strip() for x in in05.readlines()]
+    intersect = overlapTwoLists(huRIMappedNames, in05)
+    print(len(intersect))
+    print(len(in05))
+    in14 = open("./ppiDB/HuRI/HuRI_14_proteins.txt", "r")
+    in14 = [x.strip() for x in in14.readlines()]
+    intersect = overlapTwoLists(huRIMappedNames, in14)
+    print(len(intersect))
+    print(len(in14))
+    in19 = open("./ppiDB/HuRI/HuRI_HuRI_proteins.txt", "r")
+    in19 = [x.strip() for x in in19.readlines()]
+    intersect = overlapTwoLists(huRIMappedNames, in19)
+    print(len(intersect))
+    print(len(in19))
+    # retrieve HuRI associated names to construct HuRI negatives
+    # print (namesDone)
+
+
 #representative sequence clustering:
 #1) extract all appropriate length sequences to a fasta file
 #proteinsInDBtoFastaForCDHit(50, 2000, "embedPPI_50_2000.fasta")
 #2) Run CD-HIT and get actual representative sequences post clustering
 #then run CD-HIT with: cd-hit -i embedPPI_50_2000.fasta -o embedPPI_50_2000_70_Cutoff -c 0.7 to generate cluster
 #3) Extract cluster representatives (16614 proteins between 50 & 20000 AA at 70% identity threshold)
-cdHitSeqs = getCDHIT("embedPPI_50_2000_70_Cutoff.clstr", "./embedSeqs/")
-#4) Save each as npy file using the embedding methods
-for seq in cdHitSeqs:
-    print (seq)
-    print (len(seq))
-    meanS1 = getTransformerMeanSequenceOutput(seq)
-    uniRepPool = getUniRepPooledSequence(seq )
-    print (meanS1.shape)
-    print (uniRepPool.shape)
-    input()
+# 4) Save each as npy file using the embedding methods
 
+
+#looking at the number of positive examples with the cluster reps
+cdHitSeqs = getClusterRepIDs("embedPPI_50_2000_70_Cutoff.clstr") #sequence IDs in the DB
+lookAtIntersection(cdHitSeqs)
 
