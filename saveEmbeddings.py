@@ -39,8 +39,10 @@ from mpl_toolkits.mplot3d import Axes3D
 dbName = "interactionDB.sqlite3"
 DEFAULT_PATH = os.path.join(os.path.dirname(__file__), dbName)
 
-bert_model =  ProteinBertModel.from_pretrained('bert-base')
-bert_tokenizer = TAPETokenizer(vocab='iupac') 
+#bert_model =  ProteinBertModel.from_pretrained('bert-base')
+bert_model = None
+bert_tokenizer = None
+#bert_tokenizer = TAPETokenizer(vocab='iupac') 
 unirep_model = UniRepModel.from_pretrained('babbler-1900')
 unirep_tokenizer = TAPETokenizer(vocab='unirep')
 
@@ -118,6 +120,8 @@ def createReps(clusterFile, outputDir):
         print ("ON: ", i, " OUT OF ", len(output))
         print("len seq: ", len(pair[1]))
         if not path.exists("./unirep_embeddings/" + str(pair[0]) + ".npy"):
+            dummyFile = np.array([0])
+            np.save("./unirep_embeddings/" + str(pair[0]) + ".npy", dummyFile) #save temp blank file here to run mult copies of the script at once 
             uniRepPool = getUniRepPooledSequence(pair[1]).detach().numpy()
             #print(uniRepPool.shape)
             #print (type(uniRepPool))
