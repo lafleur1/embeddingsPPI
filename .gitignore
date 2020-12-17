@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 #psi and mitab ppi file formats (too large for upload to github)
-.psi
+*.psi
 HIPPIE-current.mitab.txt
