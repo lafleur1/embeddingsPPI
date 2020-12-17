@@ -454,11 +454,16 @@ for i, row in merged.iterrows():
         PIPRPairs['label'].append(flipDisruption(disruption))
         PIPRPairs['type'].append("MT")
 
+
+
+
 asDF = pd.DataFrame(ppiPairs)
 print(asDF)
 print(asDF.delta.value_counts())
 asDF.to_csv("ddgDummyFragozaML600.tab", sep="\t", header=False, index=False)
 
+
+"""
 # 868 non disruptive mutants, 195 disrutpive
 
 piprDF = pd.DataFrame(PIPRPairs)
@@ -482,3 +487,11 @@ piprDFWT.to_csv("mtFragozaPIPR.tab", sep="\t", header=True, index=False)
 
 piprDF = piprDF.drop(['type'], axis=1)
 piprDF.to_csv("bothFragozaPIPR.tab", sep="\t", header=True, index=False)
+"""
+
+#looking at how many of these sequencs alreayd in the PPI DB
+
+#looking at intersection of fragoza sequences and ppiDB sequences:
+
+
+

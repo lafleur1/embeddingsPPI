@@ -158,7 +158,7 @@ def getFragozaInteractionDFs():
 
     for i, row in merged.iterrows():
         # open orig FASTA
-        print (row)
+        #print (row)
         origID = row['Target Entrez GeneID']  # wt 1
         saveID = row['saveIDTarget']  # mt 1
         wtID2 = row["Interactor Entrez GeneID"]
@@ -199,8 +199,8 @@ def getFragozaInteractionDFs():
     #number disruptive vs not
     print (piprDF.label.value_counts())
     """
-    1    2073
-    0     255
+    #1    2073
+    #0     255
     """
 
     #mt disruptions
@@ -208,16 +208,129 @@ def getFragozaInteractionDFs():
     print (piprDFMT.label.value_counts())
 
     """
-    1    1308
-    0     255
+    #1    1308
+    #0     255
     """
 
-    piprDF = piprDF.drop(['type'], axis=1)
-    return piprDF
+    #piprDF = piprDF.drop(['type'], axis=1)
+
+    return asDF, piprDF
     #piprDF.to_csv("bothFragozaInteractions.tab", sep="\t", header=True, index=False)
 
-#try look up interactions in orig DB
-piprDF = getFragozaInteractionDFs()
 
-print (piprDF.iloc[0])
+def getFragozaSequencesDFs():
+    #returns csv of interactions and sequences below <= 2000 AA
+    # attaching NP to each row
+    origDatasetDtypes = {
+        "Chrom": str,
+        "Pos": float,
+        "dbSNP_id": str,
+        "Mutation": str,
+        "AF_all": float,
+        "Target Entrez GeneID": str,
+        "HGVS_cDNA": str,
+        "UniProt": str,
+        "Interactor Entrez GeneID": str,
+        "Disruption": float,
+    }
+    # print (origDatasetDtypes)
+    origDataset = pd.read_csv("41467_2019_11959_MOESM6_ESM.csv", sep=',')
+    origDataset = origDataset.astype(origDatasetDtypes)
 
+    origDataset['transcript'] = origDataset.apply(lambda row: row['HGVS_cDNA'].split(':')[0], axis=1)
+    origDataset['mutationAA'] = origDataset.apply(lambda row: row['UniProt'].split(',')[1], axis=1)
+
+    openedKey = pd.read_csv("transcriptProteinTableFragoza.csv")
+    merged = pd.merge(origDataset, openedKey, how='left', on='transcript')
+    merged['saveIDTarget'] = merged['Target Entrez GeneID'] + "_" + merged['mutationAA']
+    print ("intermed length: ", merged.shape) #(4109, 15)
+    seqTable = {"ID": [], "Seq": [], 'Len': []}
+    # saveIDTarget (mutation partner) mut id
+    # "Interactor Entrez GeneID" other
+    print(merged.iloc[0])
+    badMutants = []
+    for i, row in merged.iterrows():
+        # open orig FASTA
+        origID = row['Target Entrez GeneID']
+        mutation = row['mutationAA']
+        np = row['product']
+        fastaFolder = './FragozaFastas/'
+        mutationU = row['UniProt']
+        saveID = row['saveIDTarget']
+        fastaName = fastaFolder + np + ".fa"
+        newSeq = mutateSequence(fastaName, mutationU)
+        wtSeq = openFasta(fastaName)
+        if not newSeq == -1:
+            seqTable["ID"].append(saveID)
+            seqTable["Seq"].append(newSeq)
+            seqTable['Len'].append(len(newSeq))
+        else:
+            #print("Bad mutation")
+            badMutants.append(saveID)
+        if len(wtSeq) > 1:
+            seqTable["ID"].append(origID)
+            seqTable["Seq"].append(wtSeq)
+            seqTable['Len'].append(len(wtSeq))
+    badNamesInteractors = [122183, 441521, 1409, 51207, 9465]
+
+    # saving those interactor wt to a dataframe
+    uniprotInteractors = pd.read_csv("withIDsInteractorUniprot.tab", sep='\t')
+    # now for each not in the bad set, get the seqT
+    for i, row in uniprotInteractors.iterrows():
+        idInt = row['yourlist']
+        sequence = row['Sequence']
+        if idInt not in badNamesInteractors:
+            seqTable['ID'].append(idInt)
+            seqTable['Seq'].append(sequence)
+            seqTable['Len'].append(len(sequence))
+
+    badInteractors = ['390535', '541471', '729862', '202459', '155060', '401508', '80028']
+    goodInteractors = [10597, 285733, 145946, 440184, 440321, 9753, 122183, 441521, 1409, 51207, 9465]
+
+    for interactors in goodInteractors:
+        fastaName = "./FragozaInteractors/" + str(interactors) + ".fasta"
+        fastaSeq = openFasta(fastaName)
+        seqTable['Seq'].append(fastaSeq)
+        seqTable['ID'].append(interactors)
+        seqTable['Len'].append(len(fastaSeq))
+
+    asDF = pd.DataFrame(seqTable)
+    print(asDF.drop_duplicates())
+
+    # save as CSV
+    # trim lengths here
+    #print(asDF.shape)
+    #print (asDF)
+    #distribution of sequence lengths:
+    asDF = asDF.drop_duplicates()
+    print ("total sequences: ", asDF.shape)
+    asDF = asDF[asDF['Len'] <= 2000]
+    asDF = asDF.drop_duplicates()
+    print ("below 2000 AA: ", asDF.shape)
+
+    #total sequences:  (8927, 3)
+    #below 2000 AA:  (8898, 3)
+
+    print(asDF.shape)
+    passedIDS = asDF['ID'].to_list()
+    hist = asDF.hist()
+    plt.show()
+    asDF = asDF.drop(['Len'], axis=1)
+    #asDF.to_csv("FragozaSequencesMaxLen2000.tab", sep="\t", header=False, index=False)
+    return asDF
+
+
+def makeFasta(fastaName):
+    # try look up interactions in orig DB
+    asDF = getFragozaInteractionDFs()
+    print(asDF)
+    # print (piprDF.iloc[0])
+    #tape has a auto embedder set up for mutli GPU use
+    #it is broken on other settings....maybe try that first
+    with open(fastaName, "w") as f:
+        for ind, row in asDF.iterrows():
+            id = row['ID']
+            seq = row['Seq']
+            f.write(">" + str(id) + "\n" + seq + "\n")
+
+asDF = getFragozaSequencesDFs() #proteins in fragoza..
