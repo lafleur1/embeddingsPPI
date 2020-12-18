@@ -36,3 +36,8 @@ Models:
 
 
 ## Discussion
+
+## Citations
+
+## Notes:
+To replicated the PPIDB, HuRI psi files for HI-05, HI-14, and HuRI must be downloaded from the HuRI website and placed in the HuRI folder in ppiDB.  Similarly, the HIPPIE dataset must be downloaded and placed in the HIPPIE folder.  These files were not uploaded due to size restraints. 
