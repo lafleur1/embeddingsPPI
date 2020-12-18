@@ -1,15 +1,9 @@
 # embeddingsPPI: Binary protein-protien interaction prediction with unsupervised learning embeddings
 
-# Example Project
-
-Protein-protein interactions (PPIs) are the main mechanism by which proteins carry out their functions.  A better ability predict if two proteins will interact can be 
-
-VIDEO GOES HERE
+Protein-protein interactions (PPIs) are physical contacts between two or more proteins and are typically essential for carrying out normal protein functions in the cell. Variation in genetic coding sequences can result in missense mutations in protein amino acid sequence, potentially disrupting PPIs and hindering or destroying normal protein function.  As such, reliably predicting how a missense mutation will affect an interaction between two proteins could is an interesting deep learning task to both better understand protein behavior and to differentiate benign and pathogenic mutations.  There have been multiple high-performance deep learning models released for PPI prediction, but these models perform poorly when predicting mutant PPI effects.  For this project, I evaluated unsupervised protein embedding models ability to improve mutant PPI prediction peformance. 
 
 ## Introduction
 
-Overview of protein sequences.  PPIs.  Why predicting is important. 
-Mutatnt ppi stuff.
 
 ## Related Work
 
