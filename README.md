@@ -45,6 +45,6 @@ Models:
 *Embeddings:* TAPE was used to create the unirep embeddings.  To replicate the CD-HIT cluster dataset embeddings exactly, install [tape](https://github.com/songlab-cal/tape) and use:
 'tape-embed unirep ppiDB.fasta ppiDB.npz babbler-1900 --tokenizer unirep --batch_size = 10 ' and 'tape-embed unirep fragoza.fasta ppiDB.npz babbler-1900 --tokenizer unirep --batch_size = 10'
 
-*CD-HIT:* Install CD-HIT from [cdhit](https://github.com/weizhongli/cdhit) and use the default 
+*CD-HIT:* Install CD-HIT from [cdhit](https://github.com/weizhongli/cdhit) and use the default settings with '-c 0.7' when running the clusetering program
 
 
