@@ -40,4 +40,11 @@ Models:
 ## Citations
 
 ## Notes:
-To replicated the PPIDB, HuRI psi files for HI-05, HI-14, and HuRI must be downloaded from the HuRI website and placed in the HuRI folder in ppiDB.  Similarly, the HIPPIE dataset must be downloaded and placed in the HIPPIE folder.  These files were not uploaded due to size restraints. 
+*DB:* To replicated the PPIDB, HuRI psi files for HI-05, HI-14, and HuRI must be downloaded from the HuRI website and placed in the HuRI folder in ppiDB.  Similarly, the HIPPIE dataset must be downloaded and placed in the HIPPIE folder.  These files were not uploaded due to size restraints. 
+
+*Embeddings:* TAPE was used to create the unirep embeddings.  To replicate the CD-HIT cluster dataset embeddings exactly, install [tape](https://github.com/songlab-cal/tape) and use:
+'tape-embed unirep ppiDB.fasta ppiDB.npz babbler-1900 --tokenizer unirep --batch_size = 10 ' and 'tape-embed unirep fragoza.fasta ppiDB.npz babbler-1900 --tokenizer unirep --batch_size = 10'
+
+*CD-HIT:* Install CD-HIT from [cdhit](https://github.com/weizhongli/cdhit) and use the default 
+
+
