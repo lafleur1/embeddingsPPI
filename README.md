@@ -16,6 +16,8 @@ A dataset that can be used to judge the effectiveness of these state-of-the-art 
 
 ![fragozaPerformane](./images/fragozaPredictions.png) 
 
+**Figure 1.** *PIPR and MuPIPR performance on a set of PPI disruptive and nondisrutpive mutants. True disruptive are mutants which did disrupt a PPI, and were correctly predicted as non-interacting proteins by PIPR (Chen et al., 2020), True Nondisruptive are mutants which did not disrupt a PPI and the sequences were predicted to still interact by PIPR, etc.  Note that the majority of disruptive mutants are misclassified as False Nondisruptive. For MuPIPR, the Nondisruptive mutants and disrputive mutants would be expected to have differnet effects on complex stability, with disruptive mutations resulting in a much higher stability change value than nondisruptive (Zhou et al., 2020). Therefore, MuPIPR does not seem to predict these interaction pairs correctly.*
+
 Recently, an attempt was made to standardize and evaluate the effectiveness of unsupervised and semi-supervised learning techniques on several protein biology deep learning tasks, Tasks Assessing Protein Embeddings (TAPE) (Rao et al., 2019).  TAPE found that semi-supervised NLP pretraining methods helped improve performance on most of the tasks tested and assessed a transformer, LSTM, ResNet, and a multiplicative LSTM (mLSTM) for protein structure, evolutionary, and engineering prediction tasks. However, there was no best performing pretrained NLP method across all assessed tasks.  Two of the semi-supervised protein sequence models were made publicly available from TAPE, bert_base, a transformer, and UniRep, an mLSTM.  As these are different from the NLP methods employed in PIPR and MuPIPR, they could potentially improve PPI prediction abilities (Chen et al., 2020, Zhou et al., 2020).
 
 ## Approach
@@ -32,6 +34,7 @@ A SQL database of non-redundant PPIs, ppiDB, was constructed by combining severa
 - Negatome 2.0: (Blohm et al., 2014) A database of protein pairs deemed unlikely to interact, either curated from the literature or determined from protein structures. Used as a source of negative interactions.
 
 ![er](./images/erDiagram.png) 
+**Figure 2.** *Entity Relationship diagram for the SQL database ppiDB.*
 
 ### Dataset extraction from ppiDB
 The pretrained TAPE embeddings were originally trained on sequences with a maximum length of 2000 amino acids.  Therefore, to test using ppiDB for the TAPE embeddings, all sequences with length <= 2000 amino acids were extracted from ppiDB and placed in a fasta file.  They were clustered at a 70% sequence identity cutoff with CD-HIT (Limin et al., 2012), a common technique in biology deep learning models to prevent leaks between training and evaluation datasets due to the high level of similarity between protein sequences, resulting in 16,614 representative cluster sequences.  Positive interactions from HuRI, HIPPIE, and HitPredict were gathered from ppiDB between cluster representatives and Negatome negatives resulting in 279,775 positive interactions and 918 negative interactions between the cluster sequences.  An equal number of negative interactions were then added to ppiDB from non-interacting pairs in HuRI to create a balanced dataset for network training, resulting in a total dataset of 279,775 positive interactions and 279,775 negative interactions.
